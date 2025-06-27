@@ -132,7 +132,7 @@ else:
         - **Total Cost of Ownership:** £{vehicle['TCO']} → Score {tco_score:.1f}
         """)
 
-    st.progress(efficiency_score)
+    st.progress(efficiency_score / 100)
 
     # Clean metrics with bigger icons
     col1, col2, col3 = st.columns(3)
