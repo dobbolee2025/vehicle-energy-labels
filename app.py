@@ -17,9 +17,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🚗 Vehicle Energy Label Viewer")
+st.title("🚗 Vehicle Top Trumps Viewer")
 
-# Manufacturer logos
+# Manufacturer logos (fallback if you still want them)
 manufacturer_logos = {
     "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
     "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
@@ -61,22 +61,6 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Tax Band Dropdown
-    tax_rate_label = st.selectbox(
-        "Select Tax Band",
-        [
-            "20% (Standard Rate Taxpayer)",
-            "40% (Higher Rate Taxpayer)",
-            "45% (Additional Rate Taxpayer)"
-        ],
-        index=0
-    )
-    tax_rate = {
-        "20% (Standard Rate Taxpayer)": 0.20,
-        "40% (Higher Rate Taxpayer)": 0.40,
-        "45% (Additional Rate Taxpayer)": 0.45
-    }[tax_rate_label]
-
     # Safe numeric parsing
     try:
         co2 = float(vehicle.get("CO2 g/KM", 0))
@@ -117,7 +101,7 @@ else:
     else:
         rating, color = "F", "darkred"
 
-    # Safe BiK parsing
+    # Safe BiK
     try:
         p11d = float(vehicle.get("P11d inc. Options", 0))
     except (ValueError, TypeError):
@@ -127,84 +111,72 @@ else:
     except (ValueError, TypeError):
         bik_percent = 0
 
-    bik_value = (p11d * (bik_percent / 100)) * tax_rate
+    # Car Image URL
+    image_url = f"https://source.unsplash.com/featured/?{selected_manufacturer}+{selected_model}"
 
     # Start Card
-    st.markdown("""
-        <div style="max-width:650px;margin:auto;padding:20px;border:2px solid #ccc;border-radius:12px;
-        box-shadow:0 0 10px rgba(0,0,0,0.1);background:#fff;text-align:center;">
+    st.markdown(f"""
+        <div style="
+            max-width:500px;
+            margin:auto;
+            padding:20px;
+            border:3px solid #ccc;
+            border-radius:16px;
+            box-shadow:0 0 10px rgba(0,0,0,0.1);
+            background:#f9f9f9;
+            text-align:center;">
+            <h2 style='margin-bottom:10px;'>{vehicle['Manufacturer']} {vehicle['Model Range']}</h2>
+            <img src='{image_url}' style='width:100%;border-radius:8px;margin-bottom:10px;'/>
+            <h4 style='color:#555;'>{vehicle['Description']}</h4>
+            <h4 style='color:{color};'>🌱 Efficiency Rating: {rating} (Score {efficiency_score:.1f})</h4>
+        </div>
     """, unsafe_allow_html=True)
 
-    # Logo and Titles
-    logo_url = manufacturer_logos.get(selected_manufacturer)
-    if logo_url:
-        st.image(logo_url, width=100)
-    st.markdown(
-        f"<h2>{vehicle['Manufacturer']} {vehicle['Model Range']}</h2>"
-        f"<h4 style='color:#555;'>{vehicle['Description']}</h4>",
-        unsafe_allow_html=True
-    )
+    st.progress(efficiency_score/100)
 
-    # Efficiency
-    st.markdown(
-        f"<h4 style='color:{color};'>🌱 Efficiency Rating: {rating} (Score {efficiency_score:.1f})</h4>",
-        unsafe_allow_html=True
-    )
-    st.progress(efficiency_score / 100)
-
-    # Metrics Grid
+    # Metric grid
     col1, col2, col3 = st.columns(3)
-
     with col1:
-        st.markdown(
-            f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🌿 <strong>CO2</strong><br>{vehicle['CO2 g/KM']} g/km</div>",
-            unsafe_allow_html=True)
-        st.markdown(
-            f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>⚡ <strong>MPG/Range</strong><br>{mpg_label}</div>",
-            unsafe_allow_html=True)
-
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🌿 CO2<br>{vehicle['CO2 g/KM']} g/km</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>⚡ MPG/Range<br>{mpg_label}</div>", unsafe_allow_html=True)
     with col2:
-        st.markdown(
-            f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🔧 <strong>Power</strong><br>{vehicle['Power (bhp)']} bhp</div>",
-            unsafe_allow_html=True)
-        st.markdown(
-            f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🧳 <strong>Luggage</strong><br>{vehicle['Luggage Capacity (L)']} L</div>",
-            unsafe_allow_html=True)
-
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🔧 Power<br>{vehicle['Power (bhp)']} bhp</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🧳 Luggage<br>{vehicle['Luggage Capacity (L)']} L</div>", unsafe_allow_html=True)
     with col3:
-        st.markdown(
-            f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🛡️ <strong>NCAP</strong><br>{vehicle['NCAP Rating']}</div>",
-            unsafe_allow_html=True)
-        st.markdown(
-            f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🏎️ <strong>0–62 mph</strong><br>{vehicle['0-62 mph (secs)']} sec</div>",
-            unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🛡️ NCAP<br>{vehicle['NCAP Rating']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🏎️ 0–62 mph<br>{vehicle['0-62 mph (secs)']} sec</div>", unsafe_allow_html=True)
 
-    # BiK Card
-    st.markdown(
-        f"""
-        <div style='padding:12px;border:2px solid #555;border-radius:8px;margin-top:12px;'>
-            💼 <strong>BiK Information</strong><br><br>
-            <strong>BiK %:</strong> {bik_percent}%<br>
-            <strong>P11D Value:</strong> £{p11d:,.2f}<br>
-            <strong>{tax_rate_label} Annual Tax:</strong> £{bik_value:,.2f}<br>
-            <strong>Monthly Tax:</strong> £{bik_value/12:,.2f}
-        </div>
-        """,
-        unsafe_allow_html=True)
+    # BiK Card with selector inside
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<div style='max-width:500px;margin:auto;border:2px solid #555;border-radius:8px;padding:12px;text-align:center;'>", unsafe_allow_html=True)
+    tax_rate_label = st.selectbox(
+        "Select Tax Band",
+        [
+            "20% (Standard Rate Taxpayer)",
+            "40% (Higher Rate Taxpayer)",
+            "45% (Additional Rate Taxpayer)"
+        ],
+        index=0
+    )
+    tax_rate = {"20% (Standard Rate Taxpayer)":0.20,"40% (Higher Rate Taxpayer)":0.40,"45% (Additional Rate Taxpayer)":0.45}[tax_rate_label]
+    bik_value = (p11d * (bik_percent/100)) * tax_rate
+    st.markdown(f"""
+        <strong>💼 BiK Information</strong><br>
+        BiK %: {bik_percent}%<br>
+        P11D Value: £{p11d:,.2f}<br>
+        {tax_rate_label} Annual Tax: £{bik_value:,.2f}<br>
+        Monthly Tax: £{bik_value/12:,.2f}
+    """, unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Net Basic Price
-    st.markdown(
-        f"<h4 style='margin-top:20px;'>💰 Net Basic Price: {vehicle['Net Basic Price']}</h4>",
-        unsafe_allow_html=True)
+    st.markdown(f"<h4 style='text-align:center;'>💰 Net Basic Price: {vehicle['Net Basic Price']}</h4>", unsafe_allow_html=True)
 
     # Print Button
-    st.markdown(
-        """
-        <div style='margin-top:20px;'>
+    st.markdown("""
+        <div style='text-align:center;margin-top:20px;'>
         <button onclick="window.print()" style="background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;font-size:16px;">
-            🖨️ Print or Save as PDF
+        🖨️ Print or Save as PDF
         </button>
         </div>
-        </div>
-        """,
-        unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
