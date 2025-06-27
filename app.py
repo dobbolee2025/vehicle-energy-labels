@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 import pandas as pd
-import streamlit.components.v1 as components
 
 @st.cache_data
 def load_data():
@@ -11,7 +10,7 @@ data = load_data()
 
 st.title("🚗 Vehicle Energy Label Viewer")
 
-# Manufacturer logos
+# Manufacturer logos (PNG URLs for reliability)
 manufacturer_logos = {
     "Tesla": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Tesla_Motors.svg/512px-Tesla_Motors.svg.png",
     "BMW": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/512px-BMW.svg.png",
@@ -58,7 +57,7 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Manufacturer logo and title
+    # Show Manufacturer logo
     logo_url = manufacturer_logos.get(selected_manufacturer)
     if logo_url:
         col_logo, col_title = st.columns([1,5])
@@ -71,7 +70,7 @@ else:
         st.header(f"{vehicle['Manufacturer']} {vehicle['Model Range']}")
         st.subheader(vehicle["Description"])
 
-    # Compute Efficiency
+    # Compute Efficiency Rating
     try:
         co2 = float(vehicle["CO2 g/KM"])
         co2_score = max(0, min(100, 100 - (co2 / 2)))
@@ -132,6 +131,7 @@ else:
 
     st.progress(efficiency_score / 100)
 
+    # Metrics with emojis
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -146,13 +146,16 @@ else:
         st.metric("🛡️ NCAP", vehicle["NCAP Rating"])
         st.metric("🏎️ 0–62 mph", f"{vehicle['0-62 mph (secs)']} sec")
 
+    # BiK %
     st.metric("💼 BiK %", f"{vehicle['BIK% Year 1']}%")
+
     st.markdown(f"💰 **Net Basic Price:** {vehicle['Net Basic Price']}")
 
-    # Print to PDF button
-    st.markdown("""
+    # Real Print to PDF button using JS
+    st.markdown(
+        """
         <button onclick="window.print()" style="background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;font-size:16px;">
-            🖨️ Print to PDF
+            🖨️ Print or Save as PDF
         </button>
         """,
         unsafe_allow_html=True
