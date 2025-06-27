@@ -8,7 +8,7 @@ def load_data():
 
 data = load_data()
 
-# Apply global Aptos font
+# Global font: Aptos
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -67,11 +67,18 @@ else:
         ["20% Taxpayer", "40% Taxpayer", "45% Taxpayer"],
         index=0
     )
-    tax_rate = {"20% Taxpayer":0.20, "40% Taxpayer":0.40, "45% Taxpayer":0.45}[tax_rate_label]
+    tax_rate = {
+        "20% Taxpayer": 0.20,
+        "40% Taxpayer": 0.40,
+        "45% Taxpayer": 0.45
+    }[tax_rate_label]
 
-    # Compute Efficiency
-    co2 = float(vehicle.get("CO2 g/KM", 0))
-    co2_score = max(0, min(100, 100 - (co2/2)))
+    # Safe numeric parsing
+    try:
+        co2 = float(vehicle.get("CO2 g/KM", 0))
+    except (ValueError, TypeError):
+        co2 = 0
+    co2_score = max(0, min(100, 100 - (co2 / 2)))
 
     mpg = vehicle.get("WLTP MPG (Comb)")
     electric_range = vehicle.get("WLTP Electric Range (miles)")
@@ -85,8 +92,11 @@ else:
         mpg_score = 50
         mpg_label = "N/A"
 
-    tco = float(vehicle.get("TCO", 0))
-    tco_score = max(0, min(100, 100 - (tco/1000)))
+    try:
+        tco = float(vehicle.get("TCO", 0))
+    except (ValueError, TypeError):
+        tco = 0
+    tco_score = max(0, min(100, 100 - (tco / 1000)))
 
     efficiency_score = (co2_score + mpg_score + tco_score) / 3
 
@@ -103,7 +113,19 @@ else:
     else:
         rating, color = "F", "darkred"
 
-    # Begin Card
+    # Safe BiK fields
+    try:
+        p11d = float(vehicle.get("P11d inc. Options", 0))
+    except (ValueError, TypeError):
+        p11d = 0
+    try:
+        bik_percent = float(vehicle.get("BIK% Year 1", 0))
+    except (ValueError, TypeError):
+        bik_percent = 0
+
+    bik_value = (p11d * (bik_percent / 100)) * tax_rate
+
+    # Begin Top Trumps Card
     st.markdown("""
         <div style="max-width:650px;margin:auto;padding:20px;border:2px solid #ccc;border-radius:12px;
         box-shadow:0 0 10px rgba(0,0,0,0.1);background:#fff;text-align:center;">
@@ -124,9 +146,9 @@ else:
         f"<h4 style='color:{color};'>🌱 Efficiency Rating: {rating} (Score {efficiency_score:.1f})</h4>",
         unsafe_allow_html=True
     )
-    st.progress(efficiency_score/100)
+    st.progress(efficiency_score / 100)
 
-    # Metrics grid
+    # Metrics Grid
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -153,11 +175,7 @@ else:
             f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🏎️ <strong>0–62 mph</strong><br>{vehicle['0-62 mph (secs)']} sec</div>",
             unsafe_allow_html=True)
 
-    # Compute BiK
-    p11d = float(vehicle.get("P11d inc. Options",0))
-    bik_percent = float(vehicle.get("BIK% Year 1",0))
-    bik_value = (p11d * (bik_percent/100)) * tax_rate
-
+    # BiK Card
     st.markdown(
         f"""
         <div style='padding:12px;border:2px solid #555;border-radius:8px;margin-top:12px;'>
@@ -167,12 +185,15 @@ else:
             <strong>{tax_rate_label} Annual Tax:</strong> £{bik_value:,.2f}<br>
             <strong>Monthly Tax:</strong> £{bik_value/12:,.2f}
         </div>
-        """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True)
 
+    # Net Basic Price
     st.markdown(
         f"<h4 style='margin-top:20px;'>💰 Net Basic Price: {vehicle['Net Basic Price']}</h4>",
         unsafe_allow_html=True)
 
+    # Print Button
     st.markdown(
         """
         <div style='margin-top:20px;'>
