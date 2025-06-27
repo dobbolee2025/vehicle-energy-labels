@@ -4,7 +4,9 @@ import pandas as pd
 
 @st.cache_data
 def load_data():
-    return pd.read_excel("vehicle_energy_labels.xlsx")
+    df = pd.read_excel("vehicle_energy_labels.xlsx")
+    df.columns = df.columns.str.strip()  # Clean column names
+    return df
 
 data = load_data()
 
@@ -19,7 +21,7 @@ st.markdown("""
 
 st.title("🚗 Vehicle Top Trumps Viewer")
 
-# Manufacturer logos (fallback if you want them)
+# Manufacturer logos (optional fallback)
 manufacturer_logos = {
     "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
     "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
@@ -101,9 +103,9 @@ else:
     else:
         rating, color = "F", "darkred"
 
-    # Safe BiK
+    # Safe BiK using P11d Basic
     try:
-        p11d = float(vehicle.get("P11d inc. Options", 0))
+        p11d = float(vehicle.get("P11d Basic", 0))
     except (ValueError, TypeError):
         p11d = 0
     try:
