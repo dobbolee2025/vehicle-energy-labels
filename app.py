@@ -8,7 +8,7 @@ def load_data():
 
 data = load_data()
 
-# Inject global Aptos font CSS
+# Global font: Aptos
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -19,7 +19,7 @@ st.markdown("""
 
 st.title("🚗 Vehicle Energy Label Viewer")
 
-# Manufacturer logos (reliable PNGs)
+# Manufacturer logos
 manufacturer_logos = {
     "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
     "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
@@ -66,20 +66,7 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Show logo and title
-    logo_url = manufacturer_logos.get(selected_manufacturer)
-    if logo_url:
-        col_logo, col_title = st.columns([1,5])
-        with col_logo:
-            st.image(logo_url, width=120)
-        with col_title:
-            st.header(f"{vehicle['Manufacturer']} {vehicle['Model Range']}")
-            st.subheader(vehicle["Description"])
-    else:
-        st.header(f"{vehicle['Manufacturer']} {vehicle['Model Range']}")
-        st.subheader(vehicle["Description"])
-
-    # Compute efficiency rating
+    # Efficiency Rating
     try:
         co2 = float(vehicle["CO2 g/KM"])
         co2_score = max(0, min(100, 100 - (co2 / 2)))
@@ -125,83 +112,104 @@ else:
         rating = "F"
         color = "darkred"
 
+    # Start Top Trumps Card
     st.markdown(
-        f"<h4 style='color:{color};'>🌱 Efficiency Rating: {rating} (Score: {efficiency_score:.1f})</h4>",
-        unsafe_allow_html=True,
+        """
+        <div style="max-width:650px;margin:auto;padding:20px;border:2px solid #ccc;border-radius:12px;box-shadow:0 0 10px rgba(0,0,0,0.1);background:#fff;">
+        """,
+        unsafe_allow_html=True
     )
 
-    with st.expander("ℹ️ How we calculate this"):
-        st.write(f"""
-        **Efficiency Rating** based on:
-        - CO2 Output: {vehicle['CO2 g/KM']} g/km
-        - MPG/Electric Range: {mpg_label}
-        - TCO: £{vehicle['TCO']}
-        """)
+    # Logo + Title
+    logo_url = manufacturer_logos.get(selected_manufacturer)
+    if logo_url:
+        st.image(logo_url, width=100)
+    st.markdown(
+        f"<h2 style='text-align:center;'>{vehicle['Manufacturer']} {vehicle['Model Range']}</h2>"
+        f"<h4 style='text-align:center;color:#555;'>{vehicle['Description']}</h4>",
+        unsafe_allow_html=True
+    )
 
+    # Efficiency Rating
+    st.markdown(
+        f"<h4 style='color:{color};text-align:center;'>🌱 Efficiency Rating: {rating} (Score {efficiency_score:.1f})</h4>",
+        unsafe_allow_html=True
+    )
     st.progress(efficiency_score / 100)
 
-    # Metrics with clean Markdown boxes
+    # Metric grid
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown(
             f"""
-            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+            <div style='padding:8px;border:1px solid #ddd;border-radius:6px;text-align:center;'>
                 🌿 <strong>CO2</strong><br>{vehicle['CO2 g/KM']} g/km
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True)
         st.markdown(
             f"""
-            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+            <div style='padding:8px;border:1px solid #ddd;border-radius:6px;text-align:center;'>
                 ⚡ <strong>MPG/Range</strong><br>{mpg_label}
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True)
 
     with col2:
         st.markdown(
             f"""
-            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+            <div style='padding:8px;border:1px solid #ddd;border-radius:6px;text-align:center;'>
                 🔧 <strong>Power</strong><br>{vehicle['Power (bhp)']} bhp
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True)
         st.markdown(
             f"""
-            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+            <div style='padding:8px;border:1px solid #ddd;border-radius:6px;text-align:center;'>
                 🧳 <strong>Luggage</strong><br>{vehicle['Luggage Capacity (L)']} L
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True)
 
     with col3:
         st.markdown(
             f"""
-            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+            <div style='padding:8px;border:1px solid #ddd;border-radius:6px;text-align:center;'>
                 🛡️ <strong>NCAP</strong><br>{vehicle['NCAP Rating']}
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True)
         st.markdown(
             f"""
-            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+            <div style='padding:8px;border:1px solid #ddd;border-radius:6px;text-align:center;'>
                 🏎️ <strong>0–62 mph</strong><br>{vehicle['0-62 mph (secs)']} sec
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True)
 
-    # BiK
+    # BiK and Price
     st.markdown(
         f"""
-        <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;width:150px;'>
+        <div style='padding:8px;margin-top:12px;border:1px solid #ddd;border-radius:6px;text-align:center;'>
             💼 <strong>BiK %</strong><br>{vehicle['BIK% Year 1']}%
         </div>
-        """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True)
+    st.markdown(
+        f"<h4 style='text-align:center;'>💰 Net Basic Price: {vehicle['Net Basic Price']}</h4>",
+        unsafe_allow_html=True
+    )
 
-    # Price
-    st.markdown(f"💰 **Net Basic Price:** {vehicle['Net Basic Price']}")
-
-    # Print to PDF button
+    # Print Button
     st.markdown(
         """
+        <div style='text-align:center;margin-top:20px;'>
         <button onclick="window.print()" style="background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;font-size:16px;">
             🖨️ Print or Save as PDF
         </button>
+        </div>
+        </div>
         """,
         unsafe_allow_html=True
     )
