@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import pdfkit
+from io import BytesIO
 
 # Load data
 @st.cache_data
@@ -45,14 +45,14 @@ filtered = data[
 ]
 
 # Show label
-st.subheader("Vehicle Energy Label")
+st.subheader("📋 Vehicle Energy Label")
 
 if filtered.empty:
     st.warning("No data found.")
 else:
     vehicle = filtered.iloc[0]
 
-    # Define A-G rating based on CO2
+    # Determine efficiency rating
     try:
         co2 = float(vehicle["CO2 g/KM"])
     except:
@@ -77,49 +77,49 @@ else:
         rating = "F"
         color = "#c00000"
 
-    # HTML label
-    html_label = f"""
-    <div style='border:2px solid #ccc; padding:20px; border-radius:8px; width:400px;'>
-      <h3 style='text-align:center;'>{vehicle['Manufacturer']} {vehicle['Model Range']}</h3>
-      <p style='text-align:center;color:gray;'>{vehicle['Description']}</p>
-      <div style='height:180px; margin:10px 0; background:linear-gradient(to bottom,
-        #00b050 0%,
-        #92d050 20%,
-        #ffff00 40%,
-        #ffc000 60%,
-        #ff0000 80%,
-        #c00000 100%);
-        position:relative;'>
-        <div style='position:absolute; left:10px; top: {30 + (ord(rating)-65)*25}px;
-            background:{color}; color:white; padding:3px 10px; border-radius:4px;'>
-          {rating}
-        </div>
-      </div>
-      <p><b>CO2:</b> {vehicle['CO2 g/KM']} g/km</p>
-      <p><b>Range:</b> {vehicle['WLTP Electric Range (miles)']} miles</p>
-      <p><b>MPG:</b> {vehicle['WLTP MPG (Comb)']}</p>
-      <p><b>kWh/100km:</b> {vehicle['kWh/100km']}</p>
-      <p><b>Power:</b> {vehicle['Power (bhp)']} bhp</p>
-      <p><b>0–62 mph:</b> {vehicle['0-62 mph (secs)']} s</p>
-      <p><b>NCAP:</b> {vehicle['NCAP Rating']}</p>
-      <p><b>Price:</b> {vehicle['Net Basic Price']}</p>
-    </div>
+    # Create a colored rating table
+    rating_table = f"""
+    <table style='border-collapse:collapse;width:100%;'>
+      <tr><td style='background:#00b050;color:white;padding:4px;'>A</td></tr>
+      <tr><td style='background:#92d050;color:black;padding:4px;'>B</td></tr>
+      <tr><td style='background:#ffff00;color:black;padding:4px;'>C</td></tr>
+      <tr><td style='background:#ffc000;color:black;padding:4px;'>D</td></tr>
+      <tr><td style='background:#ff0000;color:white;padding:4px;'>E</td></tr>
+      <tr><td style='background:#c00000;color:white;padding:4px;'>F</td></tr>
+    </table>
     """
 
-    st.markdown(html_label, unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div style='border:2px solid #ccc; padding:15px; border-radius:8px;'>
+          <h3 style='text-align:center;'>{vehicle['Manufacturer']} {vehicle['Model Range']}</h3>
+          <h4 style='text-align:center;color:gray;'>{vehicle['Description']}</h4>
+          <hr>
+          <h4 style='color:{color};'>Efficiency Rating: {rating}</h4>
+          {rating_table}
+          <hr>
+          <p>🛢️ <b>CO2:</b> {vehicle['CO2 g/KM']} g/km</p>
+          <p🔋 <b>WLTP Electric Range:</b> {vehicle['WLTP Electric Range (miles)']} miles</p>
+          <p>⛽ <b>WLTP MPG:</b> {vehicle['WLTP MPG (Comb)']}</p>
+          <p>⚡ <b>kWh/100km:</b> {vehicle['kWh/100km']}</p>
+          <p>🏎️ <b>0–62 mph:</b> {vehicle['0-62 mph (secs)']} seconds</p>
+          <p>🔧 <b>Power:</b> {vehicle['Power (bhp)']} bhp</p>
+          <p>🧳 <b>Luggage Capacity:</b> {vehicle['Luggage Capacity (L)']} L</p>
+          <p>🛡️ <b>NCAP Rating:</b> {vehicle['NCAP Rating']}</p>
+          <p>💰 <b>Net Basic Price:</b> {vehicle['Net Basic Price']}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # Export to PDF
-    if st.button("Download this label as PDF"):
-        # Save HTML to file
-        with open("label.html", "w") as f:
-            f.write(html_label)
-        # Convert to PDF
-        pdfkit.from_file("label.html", "label.pdf")
-        # Read PDF
-        with open("label.pdf", "rb") as f:
-            st.download_button(
-                label="Click to download PDF",
-                data=f,
-                file_name="vehicle_energy_label.pdf",
-                mime="application/pdf"
-            )
+    # Generate a CSV for download
+    csv = filtered.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="Download as CSV",
+        data=csv,
+        file_name="vehicle_energy_label.csv",
+        mime="text/csv",
+    )
+
+    # PDF generation note
+    st.info("ℹ️ For PDF export, consider using browser print-to-PDF.")
