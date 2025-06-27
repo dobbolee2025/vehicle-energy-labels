@@ -8,14 +8,23 @@ def load_data():
 
 data = load_data()
 
+# Inject global Aptos font CSS
+st.markdown("""
+    <style>
+    html, body, [class*="css"] {
+        font-family: 'Aptos', sans-serif;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("🚗 Vehicle Energy Label Viewer")
 
-# Manufacturer logos (PNG URLs for reliability)
+# Manufacturer logos (reliable PNGs)
 manufacturer_logos = {
-    "Tesla": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Tesla_Motors.svg/512px-Tesla_Motors.svg.png",
-    "BMW": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/512px-BMW.svg.png",
-    "Audi": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Audi_logo_detail.svg/512px-Audi_logo_detail.svg.png",
-    "Hyundai": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Hyundai_logo.svg/512px-Hyundai_logo.svg.png",
+    "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
+    "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
+    "Audi": "https://1000marcas.net/wp-content/uploads/2020/01/Audi-Logo.png",
+    "Hyundai": "https://1000marcas.net/wp-content/uploads/2020/01/Hyundai-Logo.png",
 }
 
 manufacturers = sorted(data["Manufacturer"].dropna().unique())
@@ -57,7 +66,7 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Show Manufacturer logo
+    # Show logo and title
     logo_url = manufacturer_logos.get(selected_manufacturer)
     if logo_url:
         col_logo, col_title = st.columns([1,5])
@@ -70,7 +79,7 @@ else:
         st.header(f"{vehicle['Manufacturer']} {vehicle['Model Range']}")
         st.subheader(vehicle["Description"])
 
-    # Compute Efficiency Rating
+    # Compute efficiency rating
     try:
         co2 = float(vehicle["CO2 g/KM"])
         co2_score = max(0, min(100, 100 - (co2 / 2)))
@@ -123,35 +132,71 @@ else:
 
     with st.expander("ℹ️ How we calculate this"):
         st.write(f"""
-        The **Efficiency Rating** is based on:
-        - **CO2 Output:** {vehicle['CO2 g/KM']} g/km
-        - **MPG or Electric Range:** {mpg_label}
-        - **TCO:** £{vehicle['TCO']}
+        **Efficiency Rating** based on:
+        - CO2 Output: {vehicle['CO2 g/KM']} g/km
+        - MPG/Electric Range: {mpg_label}
+        - TCO: £{vehicle['TCO']}
         """)
 
     st.progress(efficiency_score / 100)
 
-    # Metrics with emojis
+    # Metrics with clean Markdown boxes
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("🌿 CO2", f"{vehicle['CO2 g/KM']} g/km")
-        st.metric("⚡ MPG / Range", mpg_label)
+        st.markdown(
+            f"""
+            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+                🌿 <strong>CO2</strong><br>{vehicle['CO2 g/KM']} g/km
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+                ⚡ <strong>MPG/Range</strong><br>{mpg_label}
+            </div>
+            """, unsafe_allow_html=True)
 
     with col2:
-        st.metric("🔧 Power", f"{vehicle['Power (bhp)']} bhp")
-        st.metric("🧳 Luggage", f"{vehicle['Luggage Capacity (L)']} L")
+        st.markdown(
+            f"""
+            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+                🔧 <strong>Power</strong><br>{vehicle['Power (bhp)']} bhp
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+                🧳 <strong>Luggage</strong><br>{vehicle['Luggage Capacity (L)']} L
+            </div>
+            """, unsafe_allow_html=True)
 
     with col3:
-        st.metric("🛡️ NCAP", vehicle["NCAP Rating"])
-        st.metric("🏎️ 0–62 mph", f"{vehicle['0-62 mph (secs)']} sec")
+        st.markdown(
+            f"""
+            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+                🛡️ <strong>NCAP</strong><br>{vehicle['NCAP Rating']}
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;'>
+                🏎️ <strong>0–62 mph</strong><br>{vehicle['0-62 mph (secs)']} sec
+            </div>
+            """, unsafe_allow_html=True)
 
-    # BiK %
-    st.metric("💼 BiK %", f"{vehicle['BIK% Year 1']}%")
+    # BiK
+    st.markdown(
+        f"""
+        <div style='padding:6px;border:1px solid #ddd;border-radius:4px;text-align:center;width:150px;'>
+            💼 <strong>BiK %</strong><br>{vehicle['BIK% Year 1']}%
+        </div>
+        """, unsafe_allow_html=True)
 
+    # Price
     st.markdown(f"💰 **Net Basic Price:** {vehicle['Net Basic Price']}")
 
-    # Real Print to PDF button using JS
+    # Print to PDF button
     st.markdown(
         """
         <button onclick="window.print()" style="background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;font-size:16px;">
