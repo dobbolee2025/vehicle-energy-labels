@@ -11,16 +11,14 @@ data = load_data()
 
 st.title("🚗 Vehicle Energy Label Viewer")
 
-# Manufacturer logos
+# Manufacturer logos (use PNGs for compatibility)
 manufacturer_logos = {
-    "Tesla": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg",
-    "BMW": "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg",
-    "Audi": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Audi_logo_detail.svg",
-    "Hyundai": "https://upload.wikimedia.org/wikipedia/commons/4/45/Hyundai_logo.svg",
-    # Add more brands as needed
+    "Tesla": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Tesla_Motors.svg/512px-Tesla_Motors.svg.png",
+    "BMW": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/512px-BMW.svg.png",
+    "Audi": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Audi_logo_detail.svg/512px-Audi_logo_detail.svg.png",
+    "Hyundai": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Hyundai_logo.svg/512px-Hyundai_logo.svg.png",
 }
 
-# Sidebar menu
 manufacturers = sorted(data["Manufacturer"].dropna().unique())
 
 with st.sidebar:
@@ -51,7 +49,6 @@ descriptions = (
 )
 selected_description = st.selectbox("Select Description", sorted(descriptions))
 
-# Filter
 filtered = data[
     (data["Manufacturer"] == selected_manufacturer)
     & (data["Model Range"] == selected_model)
@@ -63,12 +60,11 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Manufacturer logo
     logo_url = manufacturer_logos.get(selected_manufacturer)
     if logo_url:
         col_logo, col_title = st.columns([1,5])
         with col_logo:
-            st.image(logo_url, width=80)
+            st.image(logo_url, width=160)
         with col_title:
             st.header(f"{vehicle['Manufacturer']} {vehicle['Model Range']}")
             st.subheader(vehicle["Description"])
@@ -76,92 +72,95 @@ else:
         st.header(f"{vehicle['Manufacturer']} {vehicle['Model Range']}")
         st.subheader(vehicle["Description"])
 
-    # Efficiency rating
+    # Compute Efficiency Score
+    # CO2 scoring
     try:
         co2 = float(vehicle["CO2 g/KM"])
+        co2_score = max(0, min(100, 100 - (co2 / 2)))
     except:
-        co2 = 999
+        co2_score = 50
 
-    if co2 <= 50:
-        rating = "A"
-        progress = 100
-        color = "green"
-        description = "Best efficiency"
-    elif co2 <= 90:
-        rating = "B"
-        progress = 80
-        color = "lightgreen"
-        description = "Very good"
-    elif co2 <= 130:
-        rating = "C"
-        progress = 60
-        color = "yellow"
-        description = "Moderate"
-    elif co2 <= 170:
-        rating = "D"
-        progress = 40
-        color = "orange"
-        description = "Poor"
+    # MPG/Electric Range scoring
+    mpg = vehicle["WLTP MPG (Comb)"]
+    electric_range = vehicle["WLTP Electric Range (miles)"]
+    if pd.notnull(mpg):
+        mpg_score = min(100, mpg)
+    elif pd.notnull(electric_range):
+        mpg_score = min(100, (electric_range / 4))  # scaled down
     else:
+        mpg_score = 50
+
+    # TCO scoring
+    try:
+        tco = float(vehicle["TCO"])
+        tco_score = max(0, min(100, 100 - (tco / 1000)))
+    except:
+        tco_score = 50
+
+    efficiency_score = (co2_score + mpg_score + tco_score) / 3
+
+    # Efficiency Band
+    if efficiency_score >= 80:
+        rating = "A"
+        color = "green"
+    elif efficiency_score >= 65:
+        rating = "B"
+        color = "lightgreen"
+    elif efficiency_score >= 50:
+        rating = "C"
+        color = "yellow"
+    elif efficiency_score >= 35:
+        rating = "D"
+        color = "orange"
+    elif efficiency_score >= 20:
         rating = "E"
-        progress = 20
         color = "red"
-        description = "Very poor"
+    else:
+        rating = "F"
+        color = "darkred"
 
     st.markdown(
-        f"<h4 style='color:{color};'>🌱 Efficiency Rating: {rating}</h4>",
+        f"<h4 style='color:{color};'>🌱 Efficiency Rating: {rating} (Score: {efficiency_score:.1f})</h4>",
         unsafe_allow_html=True,
     )
-    with st.expander("ℹ️ What does this mean?"):
-        st.write("""
-        **Efficiency Rating Bands (CO2 g/km):**
-        - A: ≤50 (Best)
-        - B: 51–90
-        - C: 91–130
-        - D: 131–170
-        - E: >170
+
+    with st.expander("ℹ️ How we calculate this"):
+        st.write(f"""
+        The **Efficiency Rating** is based on:
+        - **CO2 Output:** {vehicle['CO2 g/KM']} g/km → Score {co2_score:.1f}
+        - **MPG or Electric Range:** {mpg if pd.notnull(mpg) else (str(electric_range)+' mi' if pd.notnull(electric_range) else 'N/A')} → Score {mpg_score:.1f}
+        - **Total Cost of Ownership:** £{vehicle['TCO']} → Score {tco_score:.1f}
         """)
-    
-    st.progress(progress)
 
-    # Determine MPG/Range
-    wltp_mpg = vehicle["WLTP MPG (Comb)"]
-    electric_range = vehicle["WLTP Electric Range (miles)"]
-    if pd.notnull(wltp_mpg):
-        mpg_display = f"{wltp_mpg}"
-    elif pd.notnull(electric_range):
-        mpg_display = f"{electric_range} mi (electric)"
-    else:
-        mpg_display = "N/A"
+    st.progress(efficiency_score)
 
-    # Columns with icons
+    # Clean metrics with bigger icons
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.image("https://upload.wikimedia.org/wikipedia/commons/4/45/CO2_icon.svg", width=30)
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/CO2_icon.svg/48px-CO2_icon.svg.png", width=48)
         st.metric("CO2", f"{vehicle['CO2 g/KM']} g/km")
 
-        st.image("https://upload.wikimedia.org/wikipedia/commons/4/4e/Electric_vehicle_charging_icon.png", width=30)
-        st.metric("MPG / Range", mpg_display)
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Electric_vehicle_charging_icon.png/48px-Electric_vehicle_charging_icon.png", width=48)
+        st.metric("MPG / Range", mpg if pd.notnull(mpg) else (str(electric_range)+' mi' if pd.notnull(electric_range) else "N/A"))
 
     with col2:
-        st.image("https://upload.wikimedia.org/wikipedia/commons/0/0b/Engine_icon.png", width=30)
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Engine_icon.png/48px-Engine_icon.png", width=48)
         st.metric("Power", f"{vehicle['Power (bhp)']} bhp")
 
-        st.image("https://upload.wikimedia.org/wikipedia/commons/2/2c/Suitcase_icon.png", width=30)
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Suitcase_icon.png/48px-Suitcase_icon.png", width=48)
         st.metric("Luggage", f"{vehicle['Luggage Capacity (L)']} L")
 
     with col3:
-        st.image("https://upload.wikimedia.org/wikipedia/commons/f/f0/Car_Crash_Test_icon.png", width=30)
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Car_Crash_Test_icon.png/48px-Car_Crash_Test_icon.png", width=48)
         st.metric("NCAP", vehicle["NCAP Rating"])
 
-        st.image("https://upload.wikimedia.org/wikipedia/commons/b/bd/Speedometer_icon.png", width=30)
+        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Speedometer_icon.png/48px-Speedometer_icon.png", width=48)
         st.metric("0–62 mph", f"{vehicle['0-62 mph (secs)']} sec")
 
-    st.image("https://upload.wikimedia.org/wikipedia/commons/4/4e/Currency_icon.png", width=30)
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Currency_icon.png/48px-Currency_icon.png", width=48)
     st.markdown(f"💰 **Net Basic Price:** {vehicle['Net Basic Price']}")
 
-    # Download
     csv = filtered.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Download as CSV",
