@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 import pandas as pd
+import streamlit.components.v1 as components
 
 @st.cache_data
 def load_data():
@@ -10,10 +11,12 @@ data = load_data()
 
 st.title("🚗 Vehicle Energy Label Viewer")
 
+# Manufacturer logos
 manufacturer_logos = {
     "Tesla": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Tesla_Motors.svg/512px-Tesla_Motors.svg.png",
     "BMW": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/512px-BMW.svg.png",
     "Audi": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Audi_logo_detail.svg/512px-Audi_logo_detail.svg.png",
+    "Hyundai": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Hyundai_logo.svg/512px-Hyundai_logo.svg.png",
 }
 
 manufacturers = sorted(data["Manufacturer"].dropna().unique())
@@ -55,6 +58,7 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
+    # Manufacturer logo and title
     logo_url = manufacturer_logos.get(selected_manufacturer)
     if logo_url:
         col_logo, col_title = st.columns([1,5])
@@ -142,6 +146,14 @@ else:
         st.metric("🛡️ NCAP", vehicle["NCAP Rating"])
         st.metric("🏎️ 0–62 mph", f"{vehicle['0-62 mph (secs)']} sec")
 
+    st.metric("💼 BiK %", f"{vehicle['BIK% Year 1']}%")
     st.markdown(f"💰 **Net Basic Price:** {vehicle['Net Basic Price']}")
 
-    st.info("📄 **Tip:** Use your browser's **Print > Save as PDF** feature to export this view as a PDF A4 report.")
+    # Print to PDF button
+    st.markdown("""
+        <button onclick="window.print()" style="background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;font-size:16px;">
+            🖨️ Print to PDF
+        </button>
+        """,
+        unsafe_allow_html=True
+    )
