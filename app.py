@@ -19,7 +19,7 @@ st.markdown("""
 
 st.title("🚗 Vehicle Energy Label Viewer")
 
-# Logos
+# Manufacturer logos
 manufacturer_logos = {
     "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
     "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
@@ -61,16 +61,20 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Taxpayer Rate Selector
+    # Tax Band Dropdown
     tax_rate_label = st.selectbox(
-        "Select Taxpayer Rate",
-        ["20% Taxpayer", "40% Taxpayer", "45% Taxpayer"],
+        "Select Tax Band",
+        [
+            "20% (Standard Rate Taxpayer)",
+            "40% (Higher Rate Taxpayer)",
+            "45% (Additional Rate Taxpayer)"
+        ],
         index=0
     )
     tax_rate = {
-        "20% Taxpayer": 0.20,
-        "40% Taxpayer": 0.40,
-        "45% Taxpayer": 0.45
+        "20% (Standard Rate Taxpayer)": 0.20,
+        "40% (Higher Rate Taxpayer)": 0.40,
+        "45% (Additional Rate Taxpayer)": 0.45
     }[tax_rate_label]
 
     # Safe numeric parsing
@@ -113,7 +117,7 @@ else:
     else:
         rating, color = "F", "darkred"
 
-    # Safe BiK fields
+    # Safe BiK parsing
     try:
         p11d = float(vehicle.get("P11d inc. Options", 0))
     except (ValueError, TypeError):
@@ -125,13 +129,13 @@ else:
 
     bik_value = (p11d * (bik_percent / 100)) * tax_rate
 
-    # Begin Top Trumps Card
+    # Start Card
     st.markdown("""
         <div style="max-width:650px;margin:auto;padding:20px;border:2px solid #ccc;border-radius:12px;
         box-shadow:0 0 10px rgba(0,0,0,0.1);background:#fff;text-align:center;">
     """, unsafe_allow_html=True)
 
-    # Logo and Title
+    # Logo and Titles
     logo_url = manufacturer_logos.get(selected_manufacturer)
     if logo_url:
         st.image(logo_url, width=100)
