@@ -19,7 +19,7 @@ st.markdown("""
 
 st.title("🚗 Vehicle Top Trumps Viewer")
 
-# Manufacturer logos (fallback if you still want them)
+# Manufacturer logos (fallback if you want them)
 manufacturer_logos = {
     "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
     "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
@@ -125,26 +125,25 @@ else:
             box-shadow:0 0 10px rgba(0,0,0,0.1);
             background:#f9f9f9;
             text-align:center;">
-            <h2 style='margin-bottom:10px;'>{vehicle['Manufacturer']} {vehicle['Model Range']}</h2>
+            <h2 style='margin-bottom:10px;'>{vehicle.get('Manufacturer', '')} {vehicle.get('Model Range', '')}</h2>
             <img src='{image_url}' style='width:100%;border-radius:8px;margin-bottom:10px;'/>
-            <h4 style='color:#555;'>{vehicle['Description']}</h4>
+            <h4 style='color:#555;'>{vehicle.get('Description', '')}</h4>
             <h4 style='color:{color};'>🌱 Efficiency Rating: {rating} (Score {efficiency_score:.1f})</h4>
-        </div>
     """, unsafe_allow_html=True)
 
     st.progress(efficiency_score/100)
 
-    # Metric grid
+    # Metrics grid
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🌿 CO2<br>{vehicle['CO2 g/KM']} g/km</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🌿 CO2<br>{vehicle.get('CO2 g/KM', 'N/A')} g/km</div>", unsafe_allow_html=True)
         st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>⚡ MPG/Range<br>{mpg_label}</div>", unsafe_allow_html=True)
     with col2:
-        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🔧 Power<br>{vehicle['Power (bhp)']} bhp</div>", unsafe_allow_html=True)
-        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🧳 Luggage<br>{vehicle['Luggage Capacity (L)']} L</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🔧 Power<br>{vehicle.get('Power (bhp)', 'N/A')} bhp</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🧳 Luggage<br>{vehicle.get('Luggage Capacity (Seats Up)', 'N/A')} L</div>", unsafe_allow_html=True)
     with col3:
-        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🛡️ NCAP<br>{vehicle['NCAP Rating']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🏎️ 0–62 mph<br>{vehicle['0-62 mph (secs)']} sec</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🛡️ NCAP<br>{vehicle.get('NCAP Rating', 'N/A')}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding:8px;border:1px solid #ddd;border-radius:6px;'>🏎️ 0–62 mph<br>{vehicle.get('0-62 mph (secs)', 'N/A')} sec</div>", unsafe_allow_html=True)
 
     # BiK Card with selector inside
     st.markdown("<br>", unsafe_allow_html=True)
@@ -170,7 +169,7 @@ else:
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Net Basic Price
-    st.markdown(f"<h4 style='text-align:center;'>💰 Net Basic Price: {vehicle['Net Basic Price']}</h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='text-align:center;'>💰 Net Basic Price: {vehicle.get('Net Basic Price', 'N/A')}</h4>", unsafe_allow_html=True)
 
     # Print Button
     st.markdown("""
@@ -178,5 +177,6 @@ else:
         <button onclick="window.print()" style="background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;font-size:16px;">
         🖨️ Print or Save as PDF
         </button>
+        </div>
         </div>
     """, unsafe_allow_html=True)
