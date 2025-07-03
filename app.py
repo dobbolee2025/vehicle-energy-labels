@@ -9,6 +9,7 @@ def load_data():
 
 data = load_data()
 
+# Global font
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -56,12 +57,16 @@ else:
     # Image placeholder
     image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
 
+    # Safe float converter that handles £ and ,
     def safe_float(value):
         try:
+            if isinstance(value, str):
+                value = value.replace("£", "").replace(",", "").strip()
             return float(value)
         except (ValueError, TypeError):
             return None
 
+    # Data fields
     mpg = vehicle.get("WLTP_MPG_Comb")
     mpg_label = f"{mpg} MPG" if pd.notnull(mpg) else "N/A"
     co2 = vehicle.get("CO2_g-KM", "N/A")
@@ -75,16 +80,15 @@ else:
 
     if p11d is None:
         p11d_display = "N/A"
-        p11d = 0
     else:
         p11d_display = f"£{p11d:,.2f}"
 
     if bik_percent is None:
         bik_percent_display = "N/A"
-        bik_percent = 0
     else:
         bik_percent_display = f"{bik_percent}%"
 
+    # Tax band selection
     st.markdown("<br>", unsafe_allow_html=True)
     tax_rate_label = st.selectbox(
         "Select Tax Band",
@@ -95,11 +99,23 @@ else:
         ],
         index=0
     )
-    tax_rate = {"20% (Standard Rate Taxpayer)":0.20,"40% (Higher Rate Taxpayer)":0.40,"45% (Additional Rate Taxpayer)":0.45}[tax_rate_label]
-    bik_value = (p11d * (bik_percent/100)) * tax_rate
+    tax_rate = {
+        "20% (Standard Rate Taxpayer)": 0.20,
+        "40% (Higher Rate Taxpayer)": 0.40,
+        "45% (Additional Rate Taxpayer)": 0.45
+    }[tax_rate_label]
+
+    if p11d is None or bik_percent is None:
+        bik_value_display = "N/A"
+        bik_monthly_display = "N/A"
+    else:
+        bik_value = (p11d * (bik_percent / 100)) * tax_rate
+        bik_value_display = f"£{bik_value:,.2f}"
+        bik_monthly_display = f"£{bik_value / 12:,.2f}"
 
     efficiency = "A" if co2 != "N/A" and safe_float(co2) is not None and safe_float(co2) < 50 else "C"
 
+    # Card HTML
     st.markdown(f"""
     <div style="
         max-width:500px;
@@ -146,8 +162,8 @@ else:
             <strong>💼 BiK Information</strong><br>
             BiK %: {bik_percent_display}<br>
             P11D Value: {p11d_display}<br>
-            {tax_rate_label} Annual Tax: £{bik_value:,.2f}<br>
-            Monthly Tax: £{bik_value/12:,.2f}
+            {tax_rate_label} Annual Tax: {bik_value_display}<br>
+            Monthly Tax: {bik_monthly_display}
         </div>
         <div style="text-align:center;padding:10px;">
             <button onclick="window.print()" style="background:#4CAF50;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">
