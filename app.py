@@ -55,9 +55,8 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Car Image URL
-    image_url = f"https://source.unsplash.com/featured/?{selected_manufacturer}+{selected_model}"
-    fallback_image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
+    # Use a reliable placeholder image
+    image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
 
     # Clean data
     mpg = vehicle.get("WLTP MPG (Comb)")
@@ -68,15 +67,27 @@ else:
     ncap = vehicle.get("NCAP Rating", "N/A")
     accel = vehicle.get("0 to 62 mph (secs)", "N/A")
 
-    # BiK
-    try:
-        p11d = float(vehicle.get("P11d Basic", 0))
-    except:
+    # BiK: robust numeric parsing
+    def safe_float(value):
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return None
+
+    p11d = safe_float(vehicle.get("P11d Basic", 0))
+    bik_percent = safe_float(vehicle.get("BIK% Year 1", 0))
+
+    if p11d is None:
+        p11d_display = "N/A"
         p11d = 0
-    try:
-        bik_percent = float(vehicle.get("BIK% Year 1", 0))
-    except:
+    else:
+        p11d_display = f"£{p11d:,.2f}"
+
+    if bik_percent is None:
+        bik_percent_display = "N/A"
         bik_percent = 0
+    else:
+        bik_percent_display = f"{bik_percent}%"
 
     # Tax band selection
     st.markdown("<br>", unsafe_allow_html=True)
@@ -108,7 +119,7 @@ else:
         <div style="background:#222;color:white;padding:10px 0;font-size:22px;font-weight:bold;">
             {vehicle.get('Manufacturer','')} {vehicle.get('Model Range','')}
         </div>
-        <img src="{image_url}" onerror="this.onerror=null;this.src='{fallback_image_url}';" style="width:100%;height:auto;display:block;">
+        <img src="{image_url}" style="width:100%;height:auto;display:block;">
         <div style="padding:12px;text-align:left;">
             <p style="font-size:14px;color:#333;">
             <strong>Description:</strong><br>
@@ -140,8 +151,8 @@ else:
         </div>
         <div style="padding:12px;text-align:center;">
             <strong>💼 BiK Information</strong><br>
-            BiK %: {bik_percent}%<br>
-            P11D Value: £{p11d:,.2f}<br>
+            BiK %: {bik_percent_display}<br>
+            P11D Value: {p11d_display}<br>
             {tax_rate_label} Annual Tax: £{bik_value:,.2f}<br>
             Monthly Tax: £{bik_value/12:,.2f}
         </div>
