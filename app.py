@@ -104,30 +104,6 @@ else:
     # NCAP stars
     ncap_stars = "⭐" * (int(ncap) if ncap else 0)
 
-    # Tax band selection below the card
-    tax_rate_label = st.selectbox(
-        "Select Tax Band",
-        [
-            "20% (Standard Rate Taxpayer)",
-            "40% (Higher Rate Taxpayer)",
-            "45% (Additional Rate Taxpayer)"
-        ],
-        index=0
-    )
-    tax_rate = {
-        "20% (Standard Rate Taxpayer)":0.20,
-        "40% (Higher Rate Taxpayer)":0.40,
-        "45% (Additional Rate Taxpayer)":0.45
-    }[tax_rate_label]
-
-    if p11d is None or bik_percent is None:
-        bik_value_display = "N/A"
-        bik_monthly_display = "N/A"
-    else:
-        bik_value = (p11d * (bik_percent/100)) * tax_rate
-        bik_value_display = f"£{bik_value:,.2f}"
-        bik_monthly_display = f"£{bik_value/12:,.2f}"
-
     # Card display
     st.markdown(f"""
     <div style="
@@ -176,13 +152,45 @@ else:
             <strong>💼 BiK Information</strong><br>
             BiK %: {bik_percent_display}<br>
             P11D Value: {p11d_display}<br>
-            {tax_rate_label} Annual Tax: {bik_value_display}<br>
-            Monthly Tax: {bik_monthly_display}
         </div>
         <div style="text-align:center;padding:10px;">
             <button onclick="window.print()" style="background:#4CAF50;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">
                 🖨️ Print or Save as PDF
             </button>
         </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Tax band selection below the card
+    tax_rate_label = st.selectbox(
+        "Select Tax Band",
+        [
+            "20% (Standard Rate Taxpayer)",
+            "40% (Higher Rate Taxpayer)",
+            "45% (Additional Rate Taxpayer)"
+        ],
+        index=0
+    )
+    tax_rate = {
+        "20% (Standard Rate Taxpayer)":0.20,
+        "40% (Higher Rate Taxpayer)":0.40,
+        "45% (Additional Rate Taxpayer)":0.45
+    }[tax_rate_label]
+
+    if p11d is None or bik_percent is None:
+        bik_value_display = "N/A"
+        bik_monthly_display = "N/A"
+    else:
+        bik_value = (p11d * (bik_percent/100)) * tax_rate
+        bik_value_display = f"£{bik_value:,.2f}"
+        bik_monthly_display = f"£{bik_value/12:,.2f}"
+
+    # Tax Band Confirmation Text
+    st.markdown(f"""
+    <div style="padding:12px;text-align:center;color:#333;">
+        <em>Tax Band Selected:</em> <strong>{tax_rate_label}</strong><br>
+        Annual Tax: {bik_value_display}<br>
+        Monthly Tax: {bik_monthly_display}<br>
+        This rate has been used to calculate the Annual and Monthly BiK tax shown above.
     </div>
     """, unsafe_allow_html=True)
