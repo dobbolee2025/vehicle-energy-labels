@@ -4,13 +4,11 @@ import pandas as pd
 
 @st.cache_data
 def load_data():
-    df = pd.read_excel("vehicle_energy_labels.xlsx")
-    df.columns = df.columns.str.strip()
+    df = pd.read_excel("vehicle_energy_labels_cleaned.xlsx")
     return df
 
 data = load_data()
 
-# Global font
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -33,20 +31,20 @@ with st.sidebar:
     )
 
 models = data.loc[
-    data["Manufacturer"] == selected_manufacturer, "Model Range"
+    data["Manufacturer"] == selected_manufacturer, "Model_Range"
 ].dropna().unique()
 selected_model = st.selectbox("Select Model Range", sorted(models))
 
 descriptions = data.loc[
     (data["Manufacturer"] == selected_manufacturer)
-    & (data["Model Range"] == selected_model),
+    & (data["Model_Range"] == selected_model),
     "Description"
 ].dropna().unique()
 selected_description = st.selectbox("Select Description", sorted(descriptions))
 
 filtered = data[
     (data["Manufacturer"] == selected_manufacturer)
-    & (data["Model Range"] == selected_model)
+    & (data["Model_Range"] == selected_model)
     & (data["Description"] == selected_description)
 ]
 
@@ -55,38 +53,8 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Vehicle image dictionary
-    vehicle_images = {
-        "Tesla Model 3": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Tesla_Model_3_parked%2C_front_driver_side.jpg",
-        "BMW 3 Series": "https://upload.wikimedia.org/wikipedia/commons/3/33/2019_BMW_320d_M_Sport_Automatic_2.0_Front.jpg",
-        "Audi A4": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Audi_A4_B9_sedan_IMG_0153.jpg",
-    }
-
-    # Manufacturer logo dictionary
-    manufacturer_logos = {
-        "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
-        "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
-        "Audi": "https://1000marcas.net/wp-content/uploads/2020/01/Audi-Logo.png",
-        "Hyundai": "https://1000marcas.net/wp-content/uploads/2020/01/Hyundai-Logo.png",
-    }
-
-    fallback_image_url = manufacturer_logos.get(
-        selected_manufacturer,
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
-    )
-
-    # Determine which image to show
-    model_key = f"{selected_manufacturer} {selected_model}"
-    image_url = vehicle_images.get(model_key, fallback_image_url)
-
-    # Clean data
-    mpg = vehicle.get("WLTP MPG (Comb)")
-    mpg_label = f"{mpg} MPG" if pd.notnull(mpg) else "N/A"
-    co2 = vehicle.get("CO2 g/KM", "N/A")
-    power = vehicle.get("Power (bhp)", "N/A")
-    luggage = vehicle.get("Luggage Capacity (Seats Up)", "N/A")
-    ncap = vehicle.get("NCAP Rating", "N/A")
-    accel = vehicle.get("0 to 62 mph (secs)", "N/A")
+    # Image placeholder
+    image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
 
     def safe_float(value):
         try:
@@ -94,8 +62,16 @@ else:
         except (ValueError, TypeError):
             return None
 
-    p11d = safe_float(vehicle.get("P11d Basic", 0))
-    bik_percent = safe_float(vehicle.get("BIK% Year 1", 0))
+    mpg = vehicle.get("WLTP_MPG_Comb")
+    mpg_label = f"{mpg} MPG" if pd.notnull(mpg) else "N/A"
+    co2 = vehicle.get("CO2_g-KM", "N/A")
+    power = vehicle.get("Power_bhp", "N/A")
+    luggage = vehicle.get("Luggage_Capacity_Seats_Up", "N/A")
+    ncap = vehicle.get("NCAP_Overall_Rating_Effective_February_09", "N/A")
+    accel = vehicle.get("0_to_62_mph_secs", "N/A")
+
+    p11d = safe_float(vehicle.get("P11d_Basic"))
+    bik_percent = safe_float(vehicle.get("BIKPct_Year_1"))
 
     if p11d is None:
         p11d_display = "N/A"
@@ -122,7 +98,7 @@ else:
     tax_rate = {"20% (Standard Rate Taxpayer)":0.20,"40% (Higher Rate Taxpayer)":0.40,"45% (Additional Rate Taxpayer)":0.45}[tax_rate_label]
     bik_value = (p11d * (bik_percent/100)) * tax_rate
 
-    efficiency = "A" if co2 != "N/A" and float(co2) < 50 else "C"
+    efficiency = "A" if co2 != "N/A" and safe_float(co2) is not None and safe_float(co2) < 50 else "C"
 
     st.markdown(f"""
     <div style="
@@ -134,7 +110,7 @@ else:
         box-shadow:0 0 12px rgba(0,0,0,0.2);
         overflow:hidden;">
         <div style="background:#222;color:white;padding:10px 0;font-size:22px;font-weight:bold;">
-            {vehicle.get('Manufacturer','')} {vehicle.get('Model Range','')}
+            {vehicle.get('Manufacturer','')} {vehicle.get('Model_Range','')}
         </div>
         <img src="{image_url}" style="width:100%;height:auto;display:block;">
         <div style="padding:12px;text-align:left;">
