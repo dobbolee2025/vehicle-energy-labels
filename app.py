@@ -57,6 +57,7 @@ else:
 
     # Car Image URL
     image_url = f"https://source.unsplash.com/featured/?{selected_manufacturer}+{selected_model}"
+    fallback_image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
 
     # Clean data
     mpg = vehicle.get("WLTP MPG (Comb)")
@@ -103,12 +104,11 @@ else:
         border-radius:16px;
         background:#fefefe;
         box-shadow:0 0 12px rgba(0,0,0,0.2);
-        overflow:hidden;
-        ">
+        overflow:hidden;">
         <div style="background:#222;color:white;padding:10px 0;font-size:22px;font-weight:bold;">
             {vehicle.get('Manufacturer','')} {vehicle.get('Model Range','')}
         </div>
-        <img src="{image_url}" style="width:100%;height:auto;display:block;">
+        <img src="{image_url}" onerror="this.onerror=null;this.src='{fallback_image_url}';" style="width:100%;height:auto;display:block;">
         <div style="padding:12px;text-align:left;">
             <p style="font-size:14px;color:#333;">
             <strong>Description:</strong><br>
