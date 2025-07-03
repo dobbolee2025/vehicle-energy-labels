@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 import pandas as pd
+import math
 
 @st.cache_data
 def load_data():
@@ -72,8 +73,7 @@ else:
     co2_label = f"{co2} g/km" if co2 is not None else "N/A"
     power = vehicle.get("Power_bhp", "N/A")
     luggage = vehicle.get("Luggage_Capacity_Seats_Up", "N/A")
-    ncap_raw = vehicle.get("NCAP_Overall_Rating_Effective_February_09")
-    ncap = safe_float(ncap_raw)
+    ncap = safe_float(vehicle.get("NCAP_Overall_Rating_Effective_February_09"))
     accel = vehicle.get("0_to_62_mph_secs", "N/A")
 
     # BiK info
@@ -93,8 +93,12 @@ else:
     # Efficiency
     efficiency = "A" if co2 is not None and co2 < 50 else "C"
 
-    # Total Score Calculation - SAFE
-    ncap_value = ncap if ncap is not None else 3
+    # Total Score Calculation - fully safe
+    if ncap is None or (isinstance(ncap, float) and math.isnan(ncap)):
+        ncap_value = 3
+    else:
+        ncap_value = ncap
+
     total_score = ncap_value
     if co2 is not None and co2 < 50:
         total_score += 1
