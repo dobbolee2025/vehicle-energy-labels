@@ -72,7 +72,8 @@ else:
     co2_label = f"{co2} g/km" if co2 is not None else "N/A"
     power = vehicle.get("Power_bhp", "N/A")
     luggage = vehicle.get("Luggage_Capacity_Seats_Up", "N/A")
-    ncap = safe_float(vehicle.get("NCAP_Overall_Rating_Effective_February_09"))
+    ncap_raw = vehicle.get("NCAP_Overall_Rating_Effective_February_09")
+    ncap = safe_float(ncap_raw)
     accel = vehicle.get("0_to_62_mph_secs", "N/A")
 
     # BiK info
@@ -92,8 +93,9 @@ else:
     # Efficiency
     efficiency = "A" if co2 is not None and co2 < 50 else "C"
 
-    # Total Score Calculation
-    total_score = (ncap if ncap else 3)
+    # Total Score Calculation - SAFE
+    ncap_value = ncap if ncap is not None else 3
+    total_score = ncap_value
     if co2 is not None and co2 < 50:
         total_score += 1
     if mpg is not None and mpg > 50:
@@ -151,7 +153,7 @@ else:
         <div style="padding:12px;text-align:center;">
             <strong>💼 BiK Information</strong><br>
             BiK %: {bik_percent_display}<br>
-            P11D Value: {p11d_display}<br>
+            P11D Value: {p11d_display}
         </div>
         <div style="text-align:center;padding:10px;">
             <button onclick="window.print()" style="background:#4CAF50;color:white;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;">
