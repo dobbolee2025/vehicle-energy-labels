@@ -55,8 +55,29 @@ if filtered.empty:
 else:
     vehicle = filtered.iloc[0]
 
-    # Use a reliable placeholder image
-    image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
+    # Vehicle image dictionary
+    vehicle_images = {
+        "Tesla Model 3": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Tesla_Model_3_parked%2C_front_driver_side.jpg",
+        "BMW 3 Series": "https://upload.wikimedia.org/wikipedia/commons/3/33/2019_BMW_320d_M_Sport_Automatic_2.0_Front.jpg",
+        "Audi A4": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Audi_A4_B9_sedan_IMG_0153.jpg",
+    }
+
+    # Manufacturer logo dictionary
+    manufacturer_logos = {
+        "Tesla": "https://1000marcas.net/wp-content/uploads/2020/03/logo-Tesla.png",
+        "BMW": "https://1000marcas.net/wp-content/uploads/2020/01/BMW-Logo.png",
+        "Audi": "https://1000marcas.net/wp-content/uploads/2020/01/Audi-Logo.png",
+        "Hyundai": "https://1000marcas.net/wp-content/uploads/2020/01/Hyundai-Logo.png",
+    }
+
+    fallback_image_url = manufacturer_logos.get(
+        selected_manufacturer,
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cars_logo.png/320px-Cars_logo.png"
+    )
+
+    # Determine which image to show
+    model_key = f"{selected_manufacturer} {selected_model}"
+    image_url = vehicle_images.get(model_key, fallback_image_url)
 
     # Clean data
     mpg = vehicle.get("WLTP MPG (Comb)")
@@ -67,7 +88,6 @@ else:
     ncap = vehicle.get("NCAP Rating", "N/A")
     accel = vehicle.get("0 to 62 mph (secs)", "N/A")
 
-    # BiK: robust numeric parsing
     def safe_float(value):
         try:
             return float(value)
@@ -89,7 +109,6 @@ else:
     else:
         bik_percent_display = f"{bik_percent}%"
 
-    # Tax band selection
     st.markdown("<br>", unsafe_allow_html=True)
     tax_rate_label = st.selectbox(
         "Select Tax Band",
@@ -103,10 +122,8 @@ else:
     tax_rate = {"20% (Standard Rate Taxpayer)":0.20,"40% (Higher Rate Taxpayer)":0.40,"45% (Additional Rate Taxpayer)":0.45}[tax_rate_label]
     bik_value = (p11d * (bik_percent/100)) * tax_rate
 
-    # Efficiency rating (simplified)
     efficiency = "A" if co2 != "N/A" and float(co2) < 50 else "C"
 
-    # Card HTML
     st.markdown(f"""
     <div style="
         max-width:500px;
